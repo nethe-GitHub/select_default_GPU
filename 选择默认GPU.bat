@@ -1,5 +1,5 @@
-@ECHO off
-SETLOCAL enabledelayedexpansion
+@ECHO off & SETLOCAL enabledelayedexpansion
+REM https://github.com/nethe-GitHub/select_default_GPU
 SET DisplayAdaptersClass="HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}"
 SET EnumPCILoaction="HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Enum\PCI"
 SET DXLocation="HKEY_CURRENT_USER\Software\Microsoft\DirectX"
@@ -79,10 +79,7 @@ SET /p ApplySelect=是否立即运行%Output%？(Y/N)：
 ECHO %ApplySelect% | FINDSTR /i /b y >NUL || GOTO :Begin
 CALL %Output% && ECHO 修改成功。
 GOTO :Begin
-REM 作者：闻道大笑之
-REM 首发于百度贴吧P106吧
-REM 禁止作盈利用途
-REM 2023/5/13
+
 :Function2
 (FOR /f "usebackq skip=2" %%i IN (`REG QUERY %GLOn12Location% /v SupportedUsers`) DO (
 	ECHO 警告：检测到系统中安装了《OpenCL?和OpenGL?兼容包》，需卸载后方能生效

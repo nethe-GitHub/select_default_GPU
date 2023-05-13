@@ -1,5 +1,5 @@
-@ECHO off
-SETLOCAL enabledelayedexpansion
+@ECHO off & SETLOCAL enabledelayedexpansion
+REM https://github.com/nethe-GitHub/select_default_GPU
 SET DisplayAdaptersClass="HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}"
 SET EnumPCILoaction="HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Enum\PCI"
 SET DXLocation="HKEY_CURRENT_USER\Software\Microsoft\DirectX"
@@ -132,7 +132,7 @@ IF %GLSelect% GTR %DA.max% (GOTO :Function2)
 SET Output=select_GL_!DA.desc[%GLSelect%]:~0,1!.bat
 ECHO @ECHO off >%Output%
 (	ECHO REM Program generated batch file, aim to make the system use OpenGL ICD of !DA.desc[%DXSelect%]!
-	ECHO REG ADD %GLCompatibleLocation% /f /reg:64 ^|^| ECHO Failed! Must run %%~dp0%%%Output% as admin. ^&^& Pause ^&^& EXIT /b -1
+	ECHO REG ADD %GLCompatibleLocation% /f /reg:64 ^|^| ECHO Failed, must run %%~dp0%%%Output% as admin. ^&^& Pause ^&^& EXIT /b -1
 	ECHO ^(REG ADD %GLCompatibleLocation% /f /reg:32
 	ECHO REG ADD %GLCompatibleLocation% /f /reg:64 /v DLL /d !DA.path[%GLSelect%]!
 	ECHO REG ADD %GLCompatibleLocation% /f /reg:32 /v DLL /d !DA.path32[%GLSelect%]!
