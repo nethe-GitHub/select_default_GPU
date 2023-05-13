@@ -1,6 +1,10 @@
 # select_default_GPU
 
-### Download and run the batch file "select_default_GPU.bat". Follow the instructions and choose your desired GPU. New bat files will be created. They can be run directly, or called in other automated procedures.
+Download and run the batch file "select_default_GPU.bat".
+
+Follow the instructions and choose your desired GPU.
+
+New bat files will be created. They can be ran directly, or called in other automated procedures.
 
 ### Example:
 
@@ -27,7 +31,7 @@ Cannot load OpenGL ICD of Intel Processor Graphics in this way.
 
 # 选择默认GPU
 
-## 下载并运行“选择默认GPU.bat”，按照指示选择要使用的GPU，将会生成对应的批处理文件。可以直接运行，也可以在其他程序中调用。
+下载并运行“选择默认GPU.bat”，按照指示选择要使用的GPU，将会生成对应的批处理文件。
 
 ### 例：
 
