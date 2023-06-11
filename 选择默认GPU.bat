@@ -8,33 +8,47 @@ SET GLOn12Location="HKEY_CLASSES_ROOT\Local Settings\Software\Microsoft\Windows\
 
 :Begin
 ECHO.
-ECHO 1-选择DirectX默认高性能GPU
-ECHO 2-选择OpenGL加载的ICD
+ECHO 1-打开系统显示设置以指定显卡
+ECHO 2-选择DirectX默认高性能GPU
+ECHO 3-选择OpenGL加载的ICD
 ECHO 0-退出
 SET /p FunctionSelect=功能选择： || GOTO :Begin
 SET /a FunctionSelect=%FunctionSelect:~0,1% || GOTO :Begin
 IF %FunctionSelect% EQU 1 (GOTO :Function1)
 IF %FunctionSelect% EQU 2 (GOTO :Function2)
+IF %FunctionSelect% EQU 3 (GOTO :Function3)
 IF %FunctionSelect% EQU 0 (GOTO :End)
 GOTO :Begin
 
 :Function1
+REM 开启显示设置中的默认高性能GPU选项
+REG ADD %DXLocation%\GraphicsSettings /f /v DefaultHighPerfGPUApplicable /t REG_DWORD /d 1 >NUL
+REM 开启显示设置中为应用选择特定GPU
+REG ADD %DXLocation%\GraphicsSettings /f /v SpecificGPUOptionApplicable /t REG_DWORD /d 1 >NUL
+START "C:\Windows\ImmersiveControlPanel\SystemSettings.exe" "ms-settings:display-advancedgraphics"
+GOTO :Begin
+
+:Function2
 SET /a DA.max=1
 SET DA.did[0]=""
 SET DA.reg[0]=""
 SET DA.desc[0]=""
 (FOR /f "usebackq" %%i IN (`REG QUERY %DisplayAdaptersClass% /f "00" /k`) DO (
+	SET driver=%%i
+	SET driver=!driver:~-43!
 	(FOR /f "usebackq tokens=3" %%j IN (`REG QUERY %%i /v MatchingDeviceId`) DO (
-		SET pciloc=%%j
-		SET pciloc=!pciloc:^&=^^^&!
-		(FOR /f "usebackq" %%k IN (`REG QUERY %EnumPCILoaction% /f !pciloc:~4!`) DO (
-			ECHO %%k | findstr /b %EnumPCILoaction% >NUL && SET pciloc=%%k
+		SET vendev=%%j
+		SET vendev=!vendev:~0,21!
+		SET pciloc=_
+		(FOR /f "usebackq" %%k IN (`REG QUERY %EnumPCILoaction% /s /f !driver!`) DO (
+			SET t=%%k
+			ECHO !t:^&=^^^&! | FINDSTR /i !vendev! >NUL && SET pciloc=%%k
 		))
-		SET t=_
+		SET did=_
 		(FOR /f "usebackq tokens=4,6,8 delims=_&" %%k IN ('!pciloc!') DO (
-			SET t=%%k^&%%l^&%%m
+			SET did=%%k^&%%l^&%%m
 		))
-		ECHO !t! | FINDSTR /i /b _ >NUL || SET DA.did[!DA.max!]=!t!
+		ECHO !did! | FINDSTR /i /b _ >NUL || SET DA.did[!DA.max!]=!did!
 	))
 	IF DEFINED DA.did[!DA.max!] (
 		SET DA.reg[!DA.max!]=%%i
@@ -52,7 +66,7 @@ SET /a DA.max=!DA.max!-1
 
 ECHO 找到了以下GPU：
 (FOR /l %%i in (1,1,%DA.max%) DO (
-	ECHO %%i. !DA.desc[%%i]!	!DA.reg[%%i]!	!DA.did[%%i]!
+	ECHO %%i. !DA.did[%%i]!	!DA.desc[%%i]!	!DA.reg[%%i]!
 	ECHO.
 ))
 SET /p DXSelect=输入1~%DA.max%选择，输入0取消： || GOTO :Function1
@@ -63,15 +77,9 @@ IF %DXSelect% GTR %DA.max% (GOTO :Function1)
 SET Output=select_DX_!DA.desc[%DXSelect%]:~0,1!.bat
 ECHO @ECHO off >%Output%
 (	ECHO REM 自动生成的脚本，用于将DirectX默认高性能显卡的硬件ID设置为!DA.desc[%DXSelect%]!
-	ECHO REM 开启显示设置中的默认高性能GPU选项
-	ECHO REG ADD %DXLocation%\GraphicsSettings /f /v DefaultHighPerfGPUApplicable /t REG_DWORD /d 1
-	ECHO REM 开启显示设置中为应用选择特定GPU
-	ECHO REG ADD %DXLocation%\GraphicsSettings /f /v SpecificGPUOptionApplicable /t REG_DWORD /d 1
-	ECHO.
 	ECHO REG QUERY %DXLocation%\UserGpuPreferences /v DirectXUserGlobalSettings ^| FINDSTR "SwapEffectUpgradeEnable=1" ^>NUL ^&^& SET DXSettings=SwapEffectUpgradeEnable=1; ^|^| SET DXSettings=SwapEffectUpgradeEnable=0;
 	ECHO SET DXSettings=HighPerfAdapter=!DA.did[%DXSelect%]:^&=^^^^^^^&!;%%DXSettings%%
 	ECHO REG ADD %DXLocation%\UserGpuPreferences /f /v DirectXUserGlobalSettings /d %%DXSettings%%
-	ECHO EXIT /b 0
 ) >>%Output%
 ECHO 已生成批处理文件%cd%\%Output%
 
@@ -80,7 +88,7 @@ ECHO %ApplySelect% | FINDSTR /i /b y >NUL || GOTO :Begin
 CALL %Output% && ECHO 修改成功。
 GOTO :Begin
 
-:Function2
+:Function3
 (FOR /f "usebackq skip=2" %%i IN (`REG QUERY %GLOn12Location% /v SupportedUsers`) DO (
 	ECHO 警告：检测到系统中安装了《OpenCL?和OpenGL?兼容包》，需卸载后方能生效
 )) 2>NUL
@@ -149,7 +157,6 @@ ECHO @ECHO off >%Output%
 		ECHO REG DELETE !DA.reg[%%i]! /f /v OpenGLDriverNameWow
 	))
 	ECHO ^) 2^>NUL
-	ECHO EXIT /b 0
 ) >>%Output%
 ECHO 已生成批处理文件%cd%\%Output%
 ECHO 如果是首次使用，需在重启后生效。
